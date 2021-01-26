@@ -2,11 +2,14 @@ package org.galatea.starter.service;
 
 import java.util.Collections;
 import java.util.List;
+import javax.validation.constraints.Null;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.galatea.starter.domain.IexHistoricalPrice;
 import org.galatea.starter.domain.IexLastTradedPrice;
 import org.galatea.starter.domain.IexSymbol;
+import org.junit.Test.None;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -42,6 +45,32 @@ public class IexService {
       return Collections.emptyList();
     } else {
       return iexClient.getLastTradedPriceForSymbols(symbols.toArray(new String[0]));
+    }
+  }
+
+  //JacobHK Addition
+  /**
+   * Get the historical price for a stock symbol passed in for the given time range.
+   * See https://iexcloud.io/docs/api/#historical-prices
+   *
+   * @param symbol single stock symbols to get historical price for.
+   * @param range string from acceptable range choices for when to get price from
+   * @param date [Optional] dateRange for if range value is "date"
+   * @return a IexHistoricalPrice object for the given symbol
+   */
+  public List<IexHistoricalPrice> getHistoricalPricesForSymbol(
+      final String symbol, final String range, final String date){
+    if (symbol == null || range == null) {
+      return null;
+    } else {
+      List<IexHistoricalPrice> historicalPrices;
+      if (range.equals("date") && date != null){
+        log.info("Making api request with symbol = " + symbol + " | range = " + range +  " | date = " + date);
+        historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range, date);
+      } else {
+        historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range);
+      }
+      return historicalPrices;
     }
   }
 
