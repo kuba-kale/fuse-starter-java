@@ -35,7 +35,6 @@ public interface IexClient {
   List<IexLastTradedPrice> getLastTradedPriceForSymbols(@RequestParam("symbols") String[] symbols);
 
 
-  //JacobHK Addition
   /**
    * Get the historical price for a stock symbol passed in for the given time range.
    * See https://iexcloud.io/docs/api/#historical-prices

@@ -2,14 +2,12 @@ package org.galatea.starter.service;
 
 import java.util.Collections;
 import java.util.List;
-import javax.validation.constraints.Null;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.galatea.starter.domain.IexHistoricalPrice;
 import org.galatea.starter.domain.IexLastTradedPrice;
 import org.galatea.starter.domain.IexSymbol;
-import org.junit.Test.None;
 import org.springframework.stereotype.Service;
 import org.springframework.util.CollectionUtils;
 
@@ -23,7 +21,7 @@ public class IexService {
 
   @NonNull
   private IexClient iexClient;
-
+  private final String SPECIFIC_DATE_RANGE = "date";
 
   /**
    * Get all stock symbols from IEX.
@@ -48,10 +46,9 @@ public class IexService {
     }
   }
 
-  //JacobHK Addition
   /**
-   * Get the historical price for a stock symbol passed in for the given time range.
-   * See https://iexcloud.io/docs/api/#historical-prices
+   * Get the historical price for a stock symbol passed in for the given time range. See
+   * https://iexcloud.io/docs/api/#historical-prices
    *
    * @param symbol single stock symbols to get historical price for.
    * @param range string from acceptable range choices for when to get price from
@@ -59,20 +56,21 @@ public class IexService {
    * @return a IexHistoricalPrice object for the given symbol
    */
   public List<IexHistoricalPrice> getHistoricalPricesForSymbol(
-      final String symbol, final String range, final String date){
-    if (symbol == null || range == null) {
-      return null;
+      final String symbol, final String range, final String date) {
+    List<IexHistoricalPrice> historicalPrices;
+    if (range.equals(SPECIFIC_DATE_RANGE)) {
+      log.info("Making api request with symbol = "
+          + symbol + " | range = " + range + " | date = " + date);
+      historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range, date);
     } else {
-      List<IexHistoricalPrice> historicalPrices;
-      if (range.equals("date") && date != null){
-        log.info("Making api request with symbol = " + symbol + " | range = " + range +  " | date = " + date);
-        historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range, date);
-      } else {
-        historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range);
-      }
-      return historicalPrices;
+      log.info("Making api request with symbol = "
+          + symbol + " | range = " + range);
+      historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range);
     }
+    return historicalPrices;
   }
 
-
 }
+
+
+
