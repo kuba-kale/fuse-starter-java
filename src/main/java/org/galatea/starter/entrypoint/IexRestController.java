@@ -1,5 +1,6 @@
 package org.galatea.starter.entrypoint;
 
+import feign.FeignException;
 import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
@@ -8,10 +9,14 @@ import net.sf.aspect4log.Log;
 import net.sf.aspect4log.Log.Level;
 import org.galatea.starter.domain.IexLastTradedPrice;
 import org.galatea.starter.domain.IexSymbol;
+import org.galatea.starter.domain.IexHistoricalPrice;
 import org.galatea.starter.service.IexService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,6 +29,7 @@ public class IexRestController {
 
   @NonNull
   private IexService iexService;
+  private final String SPECIFIC_DATE_RANGE = "date";
 
   /**
    * Exposes an endpoint to get all of the symbols available on IEX.
@@ -48,4 +54,32 @@ public class IexRestController {
     return iexService.getLastTradedPriceForSymbols(symbols);
   }
 
+  /**
+   * Get the historical price for a stock symbol passed in for the given time range. See
+   * https://iexcloud.io/docs/api/#historical-prices
+   *
+   * @param symbol single stock symbols to get historical price for.
+   * @param range string from acceptable range choices for when to get price from
+   * @param date [Optional] date for if range value is "date"
+   * @return a IexHistoricalPrice object for the given symbol
+   */
+  @GetMapping(value = "${mvc.iex.getHistoricalPricesPath}/{symbol}/{range}", produces = {
+      MediaType.APPLICATION_JSON_VALUE})
+  public ResponseEntity<List<IexHistoricalPrice>> getHistoricalPricesForSymbol(
+      @PathVariable final String symbol,
+      @PathVariable final String range,
+      @RequestParam(required = false) String date
+  ) {
+    log.info("Received endpoint request: symbol = "
+        + symbol + " | range = " + range + " | date = " + date);
+    if (range.equals(SPECIFIC_DATE_RANGE) && (date == null || date.isBlank())) {
+      return new ResponseEntity(HttpStatus.BAD_REQUEST);
+    }
+    try {
+      return ResponseEntity.ok(iexService.getHistoricalPricesForSymbol(symbol, range, date));
+    } catch (FeignException f){
+      log.info(f.toString());
+        return new ResponseEntity(HttpStatus.INTERNAL_SERVER_ERROR);
+    }
+  }
 }

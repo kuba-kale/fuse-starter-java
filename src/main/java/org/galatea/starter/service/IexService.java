@@ -5,6 +5,7 @@ import java.util.List;
 import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.galatea.starter.domain.IexHistoricalPrice;
 import org.galatea.starter.domain.IexLastTradedPrice;
 import org.galatea.starter.domain.IexSymbol;
 import org.springframework.stereotype.Service;
@@ -20,7 +21,7 @@ public class IexService {
 
   @NonNull
   private IexClient iexClient;
-
+  private final String SPECIFIC_DATE_RANGE = "date";
 
   /**
    * Get all stock symbols from IEX.
@@ -45,5 +46,31 @@ public class IexService {
     }
   }
 
+  /**
+   * Get the historical price for a stock symbol passed in for the given time range. See
+   * https://iexcloud.io/docs/api/#historical-prices
+   *
+   * @param symbol single stock symbols to get historical price for.
+   * @param range string from acceptable range choices for when to get price from
+   * @param date [Optional] dateRange for if range value is "date"
+   * @return a IexHistoricalPrice object for the given symbol
+   */
+  public List<IexHistoricalPrice> getHistoricalPricesForSymbol(
+      final String symbol, final String range, final String date) {
+    List<IexHistoricalPrice> historicalPrices;
+    if (range.equals(SPECIFIC_DATE_RANGE)) {
+      log.info("Making api request with symbol = "
+          + symbol + " | range = " + range + " | date = " + date);
+      historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range, date);
+    } else {
+      log.info("Making api request with symbol = "
+          + symbol + " | range = " + range);
+      historicalPrices = iexClient.getHistoricalPricesForSymbol(symbol, range);
+    }
+    return historicalPrices;
+  }
 
 }
+
+
+

@@ -1,6 +1,8 @@
 package org.galatea.starter.entrypoint;
 
+import static org.hamcrest.Matchers.hasSize;
 import static org.hamcrest.Matchers.is;
+import static org.hamcrest.Matchers.nullValue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -81,4 +83,103 @@ public class IexRestControllerTest extends ASpringTest {
         .andExpect(jsonPath("$", is(Collections.emptyList())))
         .andReturn();
   }
+
+
+  @Test
+  public void testGetHistoricalPricesBasic() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices/AAPL/1y")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].close").value(new BigDecimal("116.59")))
+        .andExpect(jsonPath("$[0].high").value(new BigDecimal("117.49")))
+        .andExpect(jsonPath("$[0].low").value(new BigDecimal("116.22")))
+        .andExpect(jsonPath("$[0].open").value(new BigDecimal("116.57")))
+        .andExpect(jsonPath("$[0].symbol", is("AAPL")))
+        .andExpect(jsonPath("$[0].volume").value(46691331))
+        .andExpect(jsonPath("$[0].date", is("2020-11-27")))
+        //checks no other unnecessary fields exist
+        .andExpect(jsonPath("$[0].*", hasSize(7)))
+        .andReturn();
+  }
+
+  @Test
+  public void testGetHistoricalPricesDateRange() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices/FB/date?date=20190603")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isOk())
+        .andExpect(jsonPath("$[0].symbol", is("FB")))
+        .andExpect(jsonPath("$[0].close").value(new BigDecimal("116.58")))
+        .andReturn();
+  }
+
+  @Test
+  public void testGetHistoricalPricesMissingSymbol() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices//1y")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isNotFound())
+        .andReturn();
+  }
+
+  @Test
+  public void testGetHistoricalPricesMissingRange() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices/FB/")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isNotFound())
+        .andReturn();
+  }
+
+
+  @Test
+  public void testGetHistoricalPricesMissingDateRange() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices/FB/date")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isBadRequest())
+        .andReturn();
+  }
+
+  @Test
+  public void testGetHistoricalPricesBlankDateRange() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices/FB/date?date=")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isBadRequest())
+        .andReturn();
+  }
+
+  @Test
+  public void testGetHistoricalNonexistentEndpoint() throws Exception {
+    MvcResult result = this.mvc.perform(
+        org.springframework.test.web.servlet.request.MockMvcRequestBuilders
+            .get("/iex/historicalPrices/IBM/1m")
+            // This URL will be hit by the MockMvc client. The result is configured in the file
+            // src/test/resources/wiremock/mappings/mapping-lastTradedPrice.json
+            .accept(MediaType.APPLICATION_JSON_VALUE))
+        .andExpect(status().isInternalServerError())
+        .andReturn();
+  }
 }
+
+
